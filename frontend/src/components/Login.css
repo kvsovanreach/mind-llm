@@ -39,6 +39,10 @@
   flex-direction: column;
 }
 
+.login-form input {
+  color: black !important;
+}
+
 .form-group {
   margin-bottom: 20px;
 }

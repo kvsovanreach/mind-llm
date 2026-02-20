@@ -578,13 +578,13 @@ async def deploy_model(
             if "MiniLM" in config.name or "all-MiniLM" in config.name:
                 embedding_max_len = "256"  # MiniLM models have 256 max position embeddings
             else:
-                embedding_max_len = "512"  # Default for other embedding models
+                embedding_max_len = "128"  # Default for other embedding models
 
             cmd = [
             "--model", config.name,
             "--served-model-name", config.abbr,
             "--max-model-len", embedding_max_len,
-            "--gpu-memory-utilization", "0.5",  # Less memory needed
+            "--gpu-memory-utilization", "0.05",  # Less memory needed
             "--port", "8000",
             "--host", "0.0.0.0"
         ]
@@ -602,7 +602,7 @@ async def deploy_model(
             "progress_message": "Initializing deployment...",
             "quantization": config.quantization or "none",
             "max_model_len": str(actual_max_model_len if config.type == ModelType.LLM else embedding_max_len if config.type == ModelType.EMBEDDING else config.max_model_len),
-            "gpu_memory_utilization": str(actual_gpu_memory if config.type == ModelType.LLM else "0.5" if config.type == ModelType.EMBEDDING else config.gpu_memory_utilization),
+            "gpu_memory_utilization": str(actual_gpu_memory if config.type == ModelType.LLM else "0.05" if config.type == ModelType.EMBEDDING else config.gpu_memory_utilization),
             "max_num_seqs": str(actual_max_num_seqs if config.type == ModelType.LLM else config.max_num_seqs),
             "gpu_device": str(config.gpu_device),  # Persist GPU assignment
             "cache_size_mb": str(cache_size) if cache_size > 0 else "0"  # Store cache size
@@ -902,11 +902,18 @@ async def start_model(abbr: str, background_tasks: BackgroundTasks, username: st
         if config.quantization:
             cmd.extend(["--quantization", config.quantization])
 
+        # Add chat template for Llama models that need it
+        if "llama" in config.name.lower() or "Llama" in config.name:
+            cmd.extend([
+                "--chat-template",
+                "{% if messages[0]['role'] == 'system' %}{% set loop_messages = messages[1:] %}{% set system_message = messages[0]['content'] %}{% elif false == true %}{% set loop_messages = messages %}{% set system_message = 'You are a helpful assistant.' %}{% else %}{% set loop_messages = messages %}{% set system_message = false %}{% endif %}{% for message in loop_messages %}{% if loop.index0 == 0 and system_message != false %}{{ '<|im_start|>system\\n' + system_message + '<|im_end|>\\n' }}{% endif %}{{ '<|im_start|>' + message['role'] + '\\n' + message['content'] + '<|im_end|>' + '\\n' }}{% endfor %}{% if add_generation_prompt %}{{ '<|im_start|>assistant\\n' }}{% endif %}"
+            ])
+
     elif config.type == ModelType.EMBEDDING:
         cmd = [
             "--model", config.name,
             "--served-model-name", config.abbr,
-            "--max-model-len", "512",
+            "--max-model-len", "128",
             "--gpu-memory-utilization", "0.5",
             "--port", "8000",
             "--host", "0.0.0.0"

@@ -1,105 +1,14 @@
 {
   "predefined_models": [
-    {
-      "name": "Qwen/Qwen2.5-1.5B-Instruct",
-      "abbr": "qwen1.5b",
-      "type": "llm",
-      "description": "Qwen 2.5 1.5B - Ultra lightweight model",
-      "max_model_len": 32768,
-      "recommended_settings": {
-        "gpu_memory_utilization": 0.3,
-        "max_num_seqs": 512
-      }
-    },
-    {
-      "name": "Qwen/Qwen2.5-3B-Instruct",
-      "abbr": "qwen3b",
-      "type": "llm",
-      "description": "Qwen 2.5 3B - Small but capable model",
-      "max_model_len": 32768,
-      "recommended_settings": {
-        "gpu_memory_utilization": 0.5,
-        "max_num_seqs": 384
-      }
-    },
-    {
-      "name": "microsoft/phi-2",
-      "abbr": "phi2",
-      "type": "llm",
-      "description": "Phi-2 2.7B - Efficient small model",
-      "max_model_len": 2048,
-      "recommended_settings": {
-        "gpu_memory_utilization": 0.4,
-        "max_num_seqs": 512
-      }
-    },
-    {
-      "name": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
-      "abbr": "tinyllama",
-      "type": "llm",
-      "description": "TinyLlama 1.1B - Extremely lightweight",
-      "max_model_len": 2048,
-      "recommended_settings": {
-        "gpu_memory_utilization": 0.2,
-        "max_num_seqs": 1024
-      }
-    },
-    {
-      "name": "meta-llama/Llama-3.1-8B-Instruct",
-      "abbr": "llama8b",
-      "type": "llm",
-      "description": "Llama 3.1 8B instruction-tuned model",
-      "max_model_len": 8192,
-      "recommended_settings": {
-        "gpu_memory_utilization": 0.9,
-        "max_num_seqs": 256
-      }
-    },
-    {
-      "name": "Qwen/Qwen2.5-1.5B-Instruct-AWQ",
-      "abbr": "qwen1.5b-awq",
-      "type": "llm",
-      "description": "Qwen 2.5 1.5B (4-bit AWQ) - Ultra fast",
-      "quantization": "awq",
-      "max_model_len": 32768,
-      "recommended_settings": {
-        "gpu_memory_utilization": 0.15,
-        "max_num_seqs": 1024
-      }
-    },
-    {
-      "name": "Qwen/Qwen2.5-3B-Instruct-AWQ",
-      "abbr": "qwen3b-awq",
-      "type": "llm",
-      "description": "Qwen 2.5 3B (4-bit AWQ) - Fast & capable",
-      "quantization": "awq",
-      "max_model_len": 32768,
-      "recommended_settings": {
-        "gpu_memory_utilization": 0.25,
-        "max_num_seqs": 768
-      }
-    },
-    {
+        {
       "name": "Qwen/Qwen2.5-7B-Instruct-AWQ",
       "abbr": "qwen7b-awq",
       "type": "llm",
       "description": "Qwen 2.5 7B (4-bit AWQ) - Efficient",
       "quantization": "awq",
-      "max_model_len": 32768,
+      "max_model_len": 2048,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.45,
-        "max_num_seqs": 512
-      }
-    },
-    {
-      "name": "TheBloke/Llama-2-13B-chat-AWQ",
-      "abbr": "llama13b-awq",
-      "type": "llm",
-      "description": "Llama 2 13B Chat (4-bit AWQ)",
-      "quantization": "awq",
-      "max_model_len": 4096,
-      "recommended_settings": {
-        "gpu_memory_utilization": 0.85,
+        "gpu_memory_utilization": 0.25,
         "max_num_seqs": 256
       }
     },
@@ -109,43 +18,21 @@
       "type": "llm",
       "description": "Mistral 7B v0.2 (4-bit AWQ) - Fast inference",
       "quantization": "awq",
-      "max_model_len": 32768,
+      "max_model_len": 2048,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.45,
-        "max_num_seqs": 512
-      }
-    },
-    {
-      "name": "TheBloke/Llama-2-7B-Chat-GPTQ",
-      "abbr": "llama7b-gptq",
-      "type": "llm",
-      "description": "Llama 2 7B Chat (4-bit GPTQ)",
-      "quantization": "gptq",
-      "max_model_len": 4096,
-      "recommended_settings": {
-        "gpu_memory_utilization": 0.45,
-        "max_num_seqs": 384
-      }
-    },
-    {
-      "name": "Qwen/Qwen2.5-7B-Instruct",
-      "abbr": "qwen7b",
-      "type": "llm",
-      "description": "Qwen 2.5 7B instruction model",
-      "max_model_len": 32768,
-      "recommended_settings": {
-        "gpu_memory_utilization": 0.9,
+        "gpu_memory_utilization": 0.25,
         "max_num_seqs": 256
       }
     },
     {
-      "name": "mistralai/Mistral-7B-Instruct-v0.3",
-      "abbr": "mistral7b",
+      "name": "TheBloke/Llama-2-13B-chat-AWQ",
+      "abbr": "llama13b-awq",
       "type": "llm",
-      "description": "Mistral 7B v0.3 instruction model",
-      "max_model_len": 32768,
+      "description": "Llama 2 13B Chat (4-bit AWQ)",
+      "quantization": "awq",
+      "max_model_len": 2048,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.9,
+        "gpu_memory_utilization": 0.25,
         "max_num_seqs": 256
       }
     },
@@ -156,7 +43,7 @@
       "description": "BGE Large English embedding model",
       "max_model_len": 512,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.3,
+        "gpu_memory_utilization": 0.05,
         "max_num_seqs": 512
       }
     },
@@ -167,7 +54,7 @@
       "description": "BGE Base English embedding model",
       "max_model_len": 512,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.2,
+        "gpu_memory_utilization": 0.05,
         "max_num_seqs": 1024
       }
     },
@@ -178,30 +65,30 @@
       "description": "Lightweight embedding model",
       "max_model_len": 256,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.1,
-        "max_num_seqs": 2048
+        "gpu_memory_utilization": 0.05,
+        "max_num_seqs": 1024
       }
     },
     {
-      "name": "BAAI/bge-reranker-v2-m3",
-      "abbr": "reranker-m3",
-      "type": "reranker",
-      "description": "BGE Reranker v2 M3",
-      "max_model_len": 8192,
+      "name": "BM-K/KoSimCSE-roberta",
+      "abbr": "kosimcse-roberta",
+      "type": "embedding",
+      "description": "Korean-Sentence-Embedding",
+      "max_model_len": 512,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.2,
-        "max_num_seqs": 256
+        "gpu_memory_utilization": 0.05,
+        "max_num_seqs": 1024
       }
     },
     {
-      "name": "microsoft/Phi-3.5-vision-instruct",
-      "abbr": "phi-vision",
-      "type": "vision",
-      "description": "Phi 3.5 Vision model",
-      "max_model_len": 4096,
+      "name": "snunlp/KR-SBERT-V40K-klueNLI-augSTS",
+      "abbr": "kr-sbert",
+      "type": "embedding",
+      "description": "Korean sentence-transformers model",
+      "max_model_len": 128,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.8,
-        "max_num_seqs": 32
+        "gpu_memory_utilization": 0.05,
+        "max_num_seqs": 1024
       }
     }
   ],

@@ -53,25 +53,70 @@ else:
             if [ "$STATUS" = "running" ]; then
                 echo -e "  ${GREEN}✓${NC} $container (GPU: $GPU_DEVICE)"
 
-                # Determine model details based on abbreviation
-                case "$MODEL_ABBR" in
-                    qwen1.5b)
-                        MODEL_NAME="Qwen/Qwen2.5-1.5B-Instruct"
+                # Extract model name and type from container command
+                MODEL_NAME=$(docker inspect "$container" 2>/dev/null | python3 -c "
+import json, sys
+data = json.load(sys.stdin)[0]
+args = data.get('Args', [])
+for i, arg in enumerate(args):
+    if arg == '--model' and i+1 < len(args):
+        print(args[i+1])
+        break
+" 2>/dev/null)
+
+                # If no model name found from command, use default mapping
+                if [ -z "$MODEL_NAME" ]; then
+                    # Determine model details based on abbreviation
+                    case "$MODEL_ABBR" in
+                        qwen1.5b)
+                            MODEL_NAME="Qwen/Qwen2.5-1.5B-Instruct"
+                            MODEL_TYPE="llm"
+                            ;;
+                        qwen3b)
+                            MODEL_NAME="Qwen/Qwen2.5-3B-Instruct"
+                            MODEL_TYPE="llm"
+                            ;;
+                        qwen7b)
+                            MODEL_NAME="Qwen/Qwen2.5-7B-Instruct"
+                            MODEL_TYPE="llm"
+                            ;;
+                        qwen7b-awq)
+                            MODEL_NAME="Qwen/Qwen2.5-7B-Instruct-AWQ"
+                            MODEL_TYPE="llm"
+                            ;;
+                        mistral7b-awq)
+                            MODEL_NAME="TheBloke/Mistral-7B-Instruct-v0.2-AWQ"
+                            MODEL_TYPE="llm"
+                            ;;
+                        llama13b-awq)
+                            MODEL_NAME="TheBloke/Llama-2-13B-chat-AWQ"
+                            MODEL_TYPE="llm"
+                            ;;
+                        bge-large)
+                            MODEL_NAME="BAAI/bge-large-en-v1.5"
+                            MODEL_TYPE="embedding"
+                            ;;
+                        bge-base)
+                            MODEL_NAME="BAAI/bge-base-en-v1.5"
+                            MODEL_TYPE="embedding"
+                            ;;
+                        minilm)
+                            MODEL_NAME="sentence-transformers/all-MiniLM-L6-v2"
+                            MODEL_TYPE="embedding"
+                            ;;
+                        *)
+                            MODEL_NAME="$MODEL_ABBR"
+                            MODEL_TYPE="llm"
+                            ;;
+                    esac
+                else
+                    # Determine type based on model name
+                    if [[ "$MODEL_NAME" == *"bge"* ]] || [[ "$MODEL_NAME" == *"MiniLM"* ]] || [[ "$MODEL_NAME" == *"embedding"* ]] || [[ "$MODEL_ABBR" == *"bge"* ]] || [[ "$MODEL_ABBR" == *"minilm"* ]]; then
+                        MODEL_TYPE="embedding"
+                    else
                         MODEL_TYPE="llm"
-                        ;;
-                    qwen3b)
-                        MODEL_NAME="Qwen/Qwen2.5-3B-Instruct"
-                        MODEL_TYPE="llm"
-                        ;;
-                    qwen7b)
-                        MODEL_NAME="Qwen/Qwen2.5-7B-Instruct"
-                        MODEL_TYPE="llm"
-                        ;;
-                    *)
-                        MODEL_NAME="$MODEL_ABBR"
-                        MODEL_TYPE="llm"
-                        ;;
-                esac
+                    fi
+                fi
 
                 # Get container port (usually 8000 for vLLM)
                 CONTAINER_PORT="8000"
@@ -131,6 +176,10 @@ NGINX_EOF
 
         for container in $RUNNING_MODELS; do
             MODEL_ABBR=${container#MIND_MODEL_}
+
+            # Check if this is an embedding model
+            MODEL_TYPE=$(docker exec MIND_REDIS_STORE redis-cli HGET "model:$MODEL_ABBR" "type" 2>/dev/null)
+
             cat >> /home/reach/notebooks/mind/nginx/conf.d/model_routes.conf << NGINX_EOF
 
 # Model: $MODEL_ABBR (OpenAI-compatible API)

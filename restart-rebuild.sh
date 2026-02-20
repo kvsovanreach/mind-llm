@@ -18,6 +18,7 @@ NO_CACHE=false
 SERVICE=""
 KEEP_MODELS=false
 CLEAR_DATASTORE=false
+ALL=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -41,6 +42,11 @@ while [[ $# -gt 0 ]]; do
             CLEAR_DATASTORE=true
             shift
             ;;
+        --all|-a)
+            ALL=true
+            NO_CACHE=true
+            shift
+            ;;
         --help|-h)
             echo "Usage: $0 [OPTIONS]"
             echo ""
@@ -50,12 +56,14 @@ while [[ $# -gt 0 ]]; do
             echo "  -f, --frontend       Rebuild only the frontend"
             echo "  -k, --keep-models    Keep running model containers"
             echo "  -c, --clear-datastore Clear Redis data and start fresh"
+            echo "  -a, --all            Full rebuild without cache (same as --no-cache)"
             echo "  -h, --help           Show this help message"
             echo ""
             echo "Examples:"
             echo "  $0                   # Rebuild and restart everything"
             echo "  $0 --frontend        # Rebuild only frontend"
             echo "  $0 --no-cache        # Full rebuild without cache"
+            echo "  $0 --all             # Full rebuild with all changes applied"
             echo "  $0 --clear-datastore # Clear all data and restart fresh"
             exit 0
             ;;
@@ -162,7 +170,7 @@ else
         npm install
         npm run build
         cd ..
-        echo -e "${GREEN}✓ Frontend assets built${NC}"
+        echo -e "${GREEN}✓ Frontend assets built with latest models.json${NC}"
     fi
 fi
 
@@ -211,6 +219,26 @@ if [ -x "./sync_redis.sh" ]; then
     ./sync_redis.sh
 else
     echo -e "${YELLOW}Warning: sync_redis.sh not found or not executable${NC}"
+fi
+
+# Ensure configuration changes are applied
+echo ""
+echo -e "${CYAN}Ensuring all configuration changes are applied...${NC}"
+
+# Check if .env changes need orchestrator restart
+if [ "$SERVICE" = "orchestrator" ] || [ -z "$SERVICE" ]; then
+    echo "Restarting orchestrator to apply .env changes..."
+    docker compose restart orchestrator
+    echo -e "${GREEN}✓ Orchestrator restarted with latest .env settings${NC}"
+fi
+
+# Update frontend if models.json was changed and not already rebuilt
+if [ "$SERVICE" != "frontend" ] && [ -f "frontend/src/models.json" ]; then
+    echo "Copying frontend assets to ensure models.json changes are live..."
+    if [ -d "frontend/dist" ]; then
+        docker cp frontend/dist/. MIND_ADMIN_UI:/usr/share/nginx/html/ 2>/dev/null || true
+        echo -e "${GREEN}✓ Frontend updated with latest models.json${NC}"
+    fi
 fi
 
 # Check if models need attention
