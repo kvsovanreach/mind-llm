@@ -7,10 +7,11 @@ import {
   ChevronRight,
   Menu,
   X,
-  FolderOpen
+  FolderOpen,
+  LogOut
 } from 'lucide-react';
 
-const Sidebar = ({ activeView, setActiveView, models = [], onCollapseChange }) => {
+const Sidebar = ({ activeView, setActiveView, models = [], onCollapseChange, onLogout }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const sidebarRef = useRef(null);
@@ -83,6 +84,7 @@ const Sidebar = ({ activeView, setActiveView, models = [], onCollapseChange }) =
           ${isCollapsed ? 'collapsed' : ''}
           ${isMobileOpen ? 'mobile-open' : 'mobile-hidden lg:transform-none'}
         `}
+        style={{ position: 'relative' }}
       >
         <div className="h-full flex flex-col">
           {/* Sidebar Header */}
@@ -107,17 +109,6 @@ const Sidebar = ({ activeView, setActiveView, models = [], onCollapseChange }) =
                   onClick={() => setIsMobileOpen(false)}
                 >
                   <X size={18} />
-                </button>
-
-                {/* Collapse toggle */}
-                <button
-                  className="hidden lg:flex btn btn-icon btn-ghost"
-                  onClick={() => {
-                    setIsCollapsed(!isCollapsed);
-                    onCollapseChange && onCollapseChange(!isCollapsed);
-                  }}
-                >
-                  {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
                 </button>
               </div>
             </div>
@@ -187,8 +178,76 @@ const Sidebar = ({ activeView, setActiveView, models = [], onCollapseChange }) =
             </ul>
           </nav>
 
+          {/* Logout Button at Bottom */}
+          <div className="mt-auto p-3 border-t border-gray-700">
+            <button
+              onClick={onLogout}
+              className="nav-link nav-link-danger w-full"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: isCollapsed ? '0' : '0.75rem',
+                justifyContent: isCollapsed ? 'center' : 'flex-start',
+                padding: '0.75rem',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                color: '#ef4444',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                fontSize: '0.875rem',
+                fontWeight: '500'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+              }}
+            >
+              <LogOut size={20} />
+              {!isCollapsed && <span>Logout</span>}
+            </button>
+          </div>
 
         </div>
+
+        {/* Collapse toggle - positioned at middle edge of sidebar */}
+        <button
+          className="hidden lg:flex"
+          onClick={() => {
+            setIsCollapsed(!isCollapsed);
+            onCollapseChange && onCollapseChange(!isCollapsed);
+          }}
+          style={{
+            position: 'absolute',
+            right: isCollapsed ? '-24px' : '-12px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            width: '24px',
+            height: '48px',
+            backgroundColor: '#1f2937',
+            border: '1px solid #374151',
+            borderRadius: '0 0.375rem 0.375rem 0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            zIndex: 2000,
+            transition: 'all 0.2s',
+            color: '#9ca3af'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#374151';
+            e.currentTarget.style.color = '#ffffff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#1f2937';
+            e.currentTarget.style.color = '#9ca3af';
+          }}
+        >
+          {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+        </button>
       </aside>
     </>
   );

@@ -91,14 +91,21 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(secur
         )
 
 # Optional: Create a dependency for optional authentication (for public endpoints)
-async def verify_token_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security)):
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+security_optional = HTTPBearer(auto_error=False)
+
+async def verify_token_optional(credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_optional)):
     """Verify JWT token if provided, otherwise return None"""
     if not credentials:
         return None
 
     try:
-        return await verify_token(credentials)
-    except HTTPException:
+        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            return None
+        return username
+    except JWTError:
         return None
 
 def hash_password(password: str) -> str:

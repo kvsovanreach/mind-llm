@@ -51,12 +51,23 @@ function AppContent() {
 
   const fetchModels = async () => {
     try {
-      // Models endpoint is public, no auth needed
-      const res = await fetch(`${API_URL}/models`);
+      // Use fetchWithAuth to properly handle authentication
+      const res = await fetchWithAuth(`${API_URL}/models`);
       const data = await res.json();
-      setModels(data);
+
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        setModels(data);
+      } else if (data.detail) {
+        console.error('Models endpoint error:', data.detail);
+        setModels([]);
+      } else {
+        console.error('Unexpected response format from models endpoint');
+        setModels([]);
+      }
     } catch (error) {
       console.error('Failed to fetch models:', error);
+      setModels([]);
     }
   };
 
@@ -124,13 +135,6 @@ function AppContent() {
 
   return (
     <div className="app-wrapper">
-      {/* Logout button */}
-      <button
-        onClick={logout}
-        className="fixed top-4 right-4 z-50 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition-colors"
-      >
-        Logout
-      </button>
 
       {/* Sidebar */}
       <Sidebar
@@ -138,10 +142,11 @@ function AppContent() {
         setActiveView={setActiveView}
         models={models}
         onCollapseChange={setSidebarCollapsed}
+        onLogout={logout}
       />
 
       {/* Main Content Area */}
-      <main className={`app-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+      <main className={`app-main ${sidebarCollapsed ? 'sidebar-collapsed' : 'with-sidebar'}`}>
         {/* Page Content */}
         <div className="app-content animate-fade-in pt-6">
           {/* Dashboard */}

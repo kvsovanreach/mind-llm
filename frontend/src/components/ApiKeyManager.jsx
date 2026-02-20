@@ -265,7 +265,7 @@ const ApiKeyManager = ({ apiKeys, onKeysUpdated, apiUrl, fetchWithAuth }) => {
             <div className="space-y-3">
               {apiKeys.map((apiKey) => (
                 <div
-                  key={apiKey.full_key || apiKey.key}
+                  key={apiKey.key}
                   className="flex items-center justify-between p-4 bg-gray-800 rounded-lg hover:bg-gray-700 transition-colors"
                 >
                   <div className="flex-1">
@@ -277,30 +277,30 @@ const ApiKeyManager = ({ apiKeys, onKeysUpdated, apiUrl, fetchWithAuth }) => {
                     </div>
                     <div className="flex items-center gap-2">
                       <code className="text-sm text-gray-600 font-mono">
-                        {visibleKeys.has(apiKey.full_key)
-                          ? apiKey.full_key
-                          : maskKey(apiKey.full_key || apiKey.key)}
+                        {visibleKeys.has(apiKey.key)
+                          ? apiKey.key
+                          : maskKey(apiKey.key)}
                       </code>
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => toggleKeyVisibility(apiKey.full_key)}
+                        onClick={() => toggleKeyVisibility(apiKey.key)}
                         className="h-6 w-6 p-0"
                       >
-                        {visibleKeys.has(apiKey.full_key) ? (
+                        {visibleKeys.has(apiKey.key) ? (
                           <EyeOff className="h-3 w-3" />
                         ) : (
                           <Eye className="h-3 w-3" />
                         )}
                       </Button>
-                      {visibleKeys.has(apiKey.full_key) && (
+                      {visibleKeys.has(apiKey.key) && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => copyToClipboard(apiKey.full_key)}
+                          onClick={() => copyToClipboard(apiKey.key)}
                           className="h-6 w-6 p-0"
                         >
-                          {copiedKey === apiKey.full_key ? (
+                          {copiedKey === apiKey.key ? (
                             <CheckCircle className="h-3 w-3 text-green-600" />
                           ) : (
                             <Copy className="h-3 w-3" />
@@ -312,11 +312,11 @@ const ApiKeyManager = ({ apiKeys, onKeysUpdated, apiUrl, fetchWithAuth }) => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => deleteApiKey(apiKey.full_key)}
-                    disabled={deleting === apiKey.full_key}
+                    onClick={() => deleteApiKey(apiKey.key)}
+                    disabled={deleting === apiKey.key}
                     className="text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
-                    {deleting === apiKey.full_key ? (
+                    {deleting === apiKey.key ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Trash2 className="h-4 w-4" />

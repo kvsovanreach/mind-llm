@@ -42,7 +42,10 @@ const ChatPlayground = ({ models, apiUrl, fetchWithAuth }) => {
 
   // Fetch API keys on mount only if not using session auth
   useEffect(() => {
-    if (fetchWithAuth) return; // Skip API key fetch when using session auth
+    if (fetchWithAuth) {
+      // Skip API key fetch when using session auth
+      return;
+    }
 
     const fetchApiKeys = async () => {
       try {
@@ -61,7 +64,7 @@ const ChatPlayground = ({ models, apiUrl, fetchWithAuth }) => {
       }
     };
     fetchApiKeys();
-  }, [apiUrl, fetchWithAuth]);
+  }, [apiUrl]);
 
   // Auto-scroll to bottom
   const scrollToBottom = () => {
@@ -72,8 +75,10 @@ const ChatPlayground = ({ models, apiUrl, fetchWithAuth }) => {
     scrollToBottom();
   }, [messages]);
 
-  // Filter only running LLM models
-  const availableModels = models.filter(m => m.type === 'llm' && m.status === 'running');
+  // Filter only running LLM models (exclude embedding, reranker, vision models)
+  const availableModels = models.filter(m => {
+    return m.type && m.type.toLowerCase() === 'llm' && m.status === 'running';
+  });
 
   // Set default model
   useEffect(() => {
@@ -106,11 +111,63 @@ const ChatPlayground = ({ models, apiUrl, fetchWithAuth }) => {
       console.log('Full URL will be:', window.location.origin + apiEndpoint);
 
       // Smart context management - truncate if too long
-      const allMessages = [
+      // Build message list ensuring proper alternation
+      // Filter out system messages, the current assistant placeholder, and any empty messages
+      const historicalMessages = messages.filter(m =>
+        m.role !== 'system' &&
+        m !== assistantMessage &&
+        m.content && m.content.trim() !== ''
+      );
+
+      // Only include messages up to (but not including) the current assistant placeholder
+      let messagesForAPI = [
         { role: 'system', content: systemPrompt },
-        ...messages.filter(m => m.role !== 'system'),
+        ...historicalMessages,
         userMessage
       ];
+
+      // Ensure alternating pattern - Mistral is very strict about this
+      const cleanedMessages = [];
+
+      // Add system message first if it exists
+      if (messagesForAPI[0] && messagesForAPI[0].role === 'system') {
+        cleanedMessages.push(messagesForAPI[0]);
+      }
+
+      // Process remaining messages to ensure user/assistant alternation
+      const nonSystemMessages = messagesForAPI.filter(m => m.role !== 'system');
+
+      // For Mistral, we need strict alternation starting with user
+      let expectedRole = 'user';
+      for (const msg of nonSystemMessages) {
+        if (msg.role === expectedRole) {
+          cleanedMessages.push(msg);
+          // Toggle expected role
+          expectedRole = expectedRole === 'user' ? 'assistant' : 'user';
+        } else if (msg.role === 'assistant' && expectedRole === 'user') {
+          // Missing user message, skip this assistant message for Mistral
+          console.warn('Skipping assistant message without preceding user message');
+        } else if (msg.role === 'user' && expectedRole === 'assistant') {
+          // Missing assistant response, add a placeholder
+          cleanedMessages.push({
+            role: 'assistant',
+            content: '...'
+          });
+          cleanedMessages.push(msg);
+          expectedRole = 'assistant';
+        }
+      }
+
+      // Mistral requires the last message to be from user
+      if (cleanedMessages[cleanedMessages.length - 1].role === 'assistant') {
+        console.warn('Removing trailing assistant message for Mistral compatibility');
+        cleanedMessages.pop();
+      }
+
+      const allMessages = cleanedMessages;
+
+      // Log the message sequence for debugging
+      console.log('Message sequence:', allMessages.map(m => m.role).join(' → '));
 
       // Estimate tokens (rough: 1 token ≈ 4 characters)
       const estimateTokens = (msgs) => {
@@ -319,14 +376,20 @@ const ChatPlayground = ({ models, apiUrl, fetchWithAuth }) => {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-6 overflow-hidden" style={{ height: 'calc(100vh - 8rem)' }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <select
             value={selectedModel}
             onChange={(e) => setSelectedModel(e.target.value)}
-            className="input w-64"
+            className="input"
+            style={{
+              width: '16rem',
+              padding: '0.5rem 2.5rem 0.5rem 1rem',
+              height: '38px',
+              fontSize: '0.875rem'
+            }}
             disabled={loading}
           >
             {availableModels.length === 0 ? (
@@ -340,40 +403,22 @@ const ChatPlayground = ({ models, apiUrl, fetchWithAuth }) => {
             )}
           </select>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={newConversation}
-              className="btn btn-secondary btn-sm"
-              disabled={loading}
-            >
-              <Plus size={14} />
-              New Chat
-            </button>
-            <button
-              onClick={clearChat}
-              className="btn btn-secondary btn-sm"
-              disabled={loading || messages.length === 0}
-            >
-              <Trash2 size={14} />
-              Clear
-            </button>
-            <button
-              onClick={exportChat}
-              className="btn btn-secondary btn-sm"
-              disabled={messages.length === 0}
-            >
-              <Download size={14} />
-              Export
-            </button>
-            <button
-              onClick={() => setShowSettings(!showSettings)}
-              className="btn btn-secondary btn-sm"
-            >
-              <Settings size={14} />
-              Settings
-              <ChevronDown size={14} className={`transition-transform ${showSettings ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className="btn btn-secondary"
+            style={{
+              padding: '0 1rem',
+              height: '38px',
+              fontSize: '0.875rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}
+          >
+            <Settings size={16} />
+            Settings
+            <ChevronDown size={16} className={`transition-transform ${showSettings ? 'rotate-180' : ''}`} />
+          </button>
         </div>
       </div>
 
@@ -454,10 +499,7 @@ const ChatPlayground = ({ models, apiUrl, fetchWithAuth }) => {
       )}
 
       {/* Main Chat Area */}
-      <div className="space-y-6">
-        {/* Chat Messages */}
-        <div>
-          <div className="card h-[600px] flex flex-col">
+      <div className="card flex flex-col flex-1 overflow-hidden">
             {messages.length === 0 ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="text-center">
@@ -482,7 +524,7 @@ const ChatPlayground = ({ models, apiUrl, fetchWithAuth }) => {
                 </div>
               </div>
             ) : (
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="flex-1 p-6 space-y-4 chat-messages-container overflow-y-auto overflow-x-hidden">
                 {messages.map((msg, idx) => (
                   <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : ''}`}>
                     {msg.role === 'assistant' && (
@@ -577,9 +619,6 @@ const ChatPlayground = ({ models, apiUrl, fetchWithAuth }) => {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
       </div>
     </div>
   );

@@ -15,9 +15,8 @@ RUN groupadd -g 985 dockerhost && \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY main.py .
-COPY docker_cli_wrapper.py .
-COPY auth.py .
+# Copy all Python files
+COPY *.py ./
 
 # Run as root but with docker group access
 USER root

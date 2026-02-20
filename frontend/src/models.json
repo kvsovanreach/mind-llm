@@ -1,6 +1,18 @@
 {
   "predefined_models": [
-        {
+    {
+      "name": "Qwen/Qwen2.5-1.5B-Instruct-AWQ",
+      "abbr": "qwen1.5b-awq",
+      "type": "llm",
+      "description": "Qwen 2.5 1.5B (4-bit AWQ) - Efficient",
+      "quantization": "awq",
+      "max_model_len": 2048,
+      "recommended_settings": {
+        "gpu_memory_utilization": 0.25,
+        "max_num_seqs": 256
+      }
+    },
+    {
       "name": "Qwen/Qwen2.5-7B-Instruct-AWQ",
       "abbr": "qwen7b-awq",
       "type": "llm",

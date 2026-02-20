@@ -32,45 +32,17 @@ MIND (Multi-model Intelligence Network Deployment) is an enterprise-grade orches
 ### Screenshots
 
 <p align="center">
-  <img src="images/dashboard.png" width="45%" />
-  <img src="images/model_library.png" width="45%" />
+  <img src="images/dashboard.png" width="49%" />
+  <img src="images/model_library.png" width="49%" />
 </p>
 <p align="center">
-  <img src="images/playground.png" width="45%" />
-  <img src="images/api_key.png" width="45%" />
+  <img src="images/playground.png" width="49%" />
+  <img src="images/api_key.png" width="49%" />
 </p>
 
 ## Architecture Overview
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                   MIND Platform                         │
-├─────────────────────────────────────────────────────────┤
-│                                                         │
-│  ┌─────────────┐     ┌──────────────┐                 │
-│  │   Frontend  │────▶│     Nginx    │                 │
-│  │   (React)   │     │ Reverse Proxy│                 │
-│  └─────────────┘     └───────┬──────┘                 │
-│                              │                         │
-│                    ┌─────────▼──────────┐              │
-│                    │   Orchestrator     │              │
-│                    │  (FastAPI + Auth)  │              │
-│                    └─────────┬──────────┘              │
-│                              │                         │
-│        ┌─────────────────────┼─────────────────────┐   │
-│        │                     │                     │   │
-│  ┌─────▼─────┐        ┌─────▼─────┐        ┌─────▼─────┐
-│  │  Model 1  │        │  Model 2  │        │  Model N  │
-│  │   (vLLM)  │        │   (vLLM)  │        │   (vLLM)  │
-│  └───────────┘        └───────────┘        └───────────┘
-│                                                         │
-│  ┌─────────────┐                    ┌─────────────┐   │
-│  │    Redis    │                    │   MongoDB   │   │
-│  │ State Store │                    │   (Future)  │   │
-│  └─────────────┘                    └─────────────┘   │
-│                                                         │
-└─────────────────────────────────────────────────────────┘
-```
+<img src="images/diagram.png" width="100%" />
 
 ## Prerequisites
 

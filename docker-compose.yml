@@ -35,10 +35,14 @@ services:
       - AUTH_PASSWORD_HASH=${AUTH_PASSWORD_HASH:-$$2b$$12$$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5CiIlW.JCNfIu}
       - JWT_SECRET=${JWT_SECRET}
       - SESSION_TIMEOUT=${SESSION_TIMEOUT:-24}
+      - HOST_CACHE_DIR=${HOST_CACHE_DIR:-~/.cache}
+      - HOST_MODELS_DIR=${HOST_MODELS_DIR:-./models}
+      - HF_CACHE_DIR=${HF_CACHE_DIR:-/root/.cache/huggingface/hub}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ~/.cache:/home/reach/.cache
+      - ${HOST_CACHE_DIR:-~/.cache}:${CONTAINER_CACHE_DIR:-/root/.cache}
       - ./nginx/conf.d:/nginx-config
+      - ./frontend/src/models.json:/app/models.json:ro
     depends_on:
       - redis
     networks:

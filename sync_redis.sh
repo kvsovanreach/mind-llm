@@ -9,6 +9,15 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
+# Get script directory
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+MODELS_JSON="${SCRIPT_DIR}/frontend/src/models.json"
+# Fallback to alternate location
+if [ ! -f "$MODELS_JSON" ]; then
+    MODELS_JSON="${SCRIPT_DIR}/src/models.json"
+fi
+NGINX_CONF_DIR="${SCRIPT_DIR}/nginx/conf.d"
+
 echo -e "${CYAN}Syncing container state with Redis...${NC}"
 
 # Get all running model containers
@@ -64,58 +73,38 @@ for i, arg in enumerate(args):
         break
 " 2>/dev/null)
 
-                # If no model name found from command, use default mapping
-                if [ -z "$MODEL_NAME" ]; then
-                    # Determine model details based on abbreviation
-                    case "$MODEL_ABBR" in
-                        qwen1.5b)
-                            MODEL_NAME="Qwen/Qwen2.5-1.5B-Instruct"
-                            MODEL_TYPE="llm"
-                            ;;
-                        qwen3b)
-                            MODEL_NAME="Qwen/Qwen2.5-3B-Instruct"
-                            MODEL_TYPE="llm"
-                            ;;
-                        qwen7b)
-                            MODEL_NAME="Qwen/Qwen2.5-7B-Instruct"
-                            MODEL_TYPE="llm"
-                            ;;
-                        qwen7b-awq)
-                            MODEL_NAME="Qwen/Qwen2.5-7B-Instruct-AWQ"
-                            MODEL_TYPE="llm"
-                            ;;
-                        mistral7b-awq)
-                            MODEL_NAME="TheBloke/Mistral-7B-Instruct-v0.2-AWQ"
-                            MODEL_TYPE="llm"
-                            ;;
-                        llama13b-awq)
-                            MODEL_NAME="TheBloke/Llama-2-13B-chat-AWQ"
-                            MODEL_TYPE="llm"
-                            ;;
-                        bge-large)
-                            MODEL_NAME="BAAI/bge-large-en-v1.5"
-                            MODEL_TYPE="embedding"
-                            ;;
-                        bge-base)
-                            MODEL_NAME="BAAI/bge-base-en-v1.5"
-                            MODEL_TYPE="embedding"
-                            ;;
-                        minilm)
-                            MODEL_NAME="sentence-transformers/all-MiniLM-L6-v2"
-                            MODEL_TYPE="embedding"
-                            ;;
-                        *)
-                            MODEL_NAME="$MODEL_ABBR"
-                            MODEL_TYPE="llm"
-                            ;;
-                    esac
-                else
-                    # Determine type based on model name
-                    if [[ "$MODEL_NAME" == *"bge"* ]] || [[ "$MODEL_NAME" == *"MiniLM"* ]] || [[ "$MODEL_NAME" == *"embedding"* ]] || [[ "$MODEL_ABBR" == *"bge"* ]] || [[ "$MODEL_ABBR" == *"minilm"* ]]; then
-                        MODEL_TYPE="embedding"
-                    else
-                        MODEL_TYPE="llm"
+                # Always look up model details from models.json
+                if [ -f "$MODELS_JSON" ]; then
+                    MODEL_INFO=$(python3 -c "
+import json
+import sys
+with open('$MODELS_JSON', 'r') as f:
+    config = json.load(f)
+    for model in config.get('predefined_models', []):
+        if model['abbr'] == '$MODEL_ABBR':
+            # Use name from container if available, otherwise from models.json
+            name = '$MODEL_NAME' if '$MODEL_NAME' else model['name']
+            print(f\"{name}|{model['type']}\")
+            sys.exit(0)
+        # Also check by model name if abbreviation doesn't match
+        elif '$MODEL_NAME' and model['name'] == '$MODEL_NAME':
+            print(f\"{model['name']}|{model['type']}\")
+            sys.exit(0)
+# Model not found in models.json
+print('$MODEL_NAME|unknown')
+" 2>/dev/null)
+                    MODEL_NAME=$(echo "$MODEL_INFO" | cut -d'|' -f1)
+                    MODEL_TYPE=$(echo "$MODEL_INFO" | cut -d'|' -f2)
+
+                    # If model not found in models.json, skip it
+                    if [ "$MODEL_TYPE" = "unknown" ]; then
+                        echo -e "  ${YELLOW}⚠${NC} Model $MODEL_ABBR not found in models.json, skipping type update"
+                        continue
                     fi
+                else
+                    echo -e "  ${RED}✗${NC} models.json not found at $MODELS_JSON"
+                    echo "     Cannot determine model type for $MODEL_ABBR"
+                    continue
                 fi
 
                 # Get container port (usually 8000 for vLLM)
@@ -169,7 +158,7 @@ for i, arg in enumerate(args):
     if curl -s http://localhost:8001/health >/dev/null 2>&1; then
         # Try to trigger update-nginx-routes endpoint if it exists
         # For now, manually generate the routes
-        cat > /home/reach/notebooks/mind/nginx/conf.d/model_routes.conf << 'NGINX_EOF'
+        cat > "${NGINX_CONF_DIR}/model_routes.conf" << 'NGINX_EOF'
 
 # Auto-generated model routing configuration
 NGINX_EOF
@@ -180,7 +169,7 @@ NGINX_EOF
             # Check if this is an embedding model
             MODEL_TYPE=$(docker exec MIND_REDIS_STORE redis-cli HGET "model:$MODEL_ABBR" "type" 2>/dev/null)
 
-            cat >> /home/reach/notebooks/mind/nginx/conf.d/model_routes.conf << NGINX_EOF
+            cat >> "${NGINX_CONF_DIR}/model_routes.conf" << NGINX_EOF
 
 # Model: $MODEL_ABBR (OpenAI-compatible API)
 

@@ -185,6 +185,25 @@
   padding: 0;
 }
 
+/* Style scrollbar for chat container */
+.chat-messages-container {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: rgba(156, 163, 175, 0.3) transparent;
+}
+.chat-messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+.chat-messages-container::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
+.chat-messages-container::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.5);
+}
+
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
@@ -208,12 +227,14 @@ body {
 
 html, body {
   background-color: #030712 !important;
+  height: 100%;
+  overflow: hidden;
 }
 
 /* ==================== Layout Structure ==================== */
 .app-wrapper {
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   background: var(--bg-primary);
   position: relative;
@@ -234,6 +255,9 @@ html, body {
 
 .app-sidebar.collapsed {
   width: var(--sidebar-collapsed);
+}
+
+.app-sidebar.collapsed nav {
   overflow-x: hidden;
   overflow-y: auto;
 }
@@ -246,18 +270,28 @@ html, body {
 
 .app-main {
   flex: 1;
-  margin-left: var(--sidebar-width);
-  min-height: 100vh;
+  margin-left: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--bg-secondary);
-  transition: margin-left var(--transition-base);
-  width: calc(100% - var(--sidebar-width));
+  transition: none;
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.app-sidebar.collapsed ~ .app-main {
-  margin-left: var(--sidebar-collapsed);
-  width: calc(100% - var(--sidebar-collapsed));
+/* Remove all margin-left - sidebar will overlay content */
+.app-main.with-sidebar {
+  margin-left: 0;
+  width: 100%;
+}
+
+.app-main.sidebar-collapsed {
+  margin-left: 0;
+  width: 100%;
 }
 
 .app-header {
@@ -274,7 +308,6 @@ html, body {
 }
 
 .app-content {
-  flex: 1;
   width: 100%;
   max-width: var(--container-max);
   margin: 0 auto;
