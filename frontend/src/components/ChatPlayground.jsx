@@ -22,13 +22,13 @@ import {
   History
 } from 'lucide-react';
 
-const ChatPlayground = ({ models, apiUrl }) => {
+const ChatPlayground = ({ models, apiUrl, fetchWithAuth }) => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
   const [streaming, setStreaming] = useState(true);
   const [loading, setLoading] = useState(false);
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKey] = useState(''); // Only used if fetchWithAuth not available
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(512);
   const [topP, setTopP] = useState(0.9);
@@ -40,8 +40,10 @@ const ChatPlayground = ({ models, apiUrl }) => {
   const abortControllerRef = useRef(null);
   const textareaRef = useRef(null);
 
-  // Fetch API keys on mount
+  // Fetch API keys on mount only if not using session auth
   useEffect(() => {
+    if (fetchWithAuth) return; // Skip API key fetch when using session auth
+
     const fetchApiKeys = async () => {
       try {
         const res = await fetch(`${apiUrl}/api-keys`);
@@ -59,7 +61,7 @@ const ChatPlayground = ({ models, apiUrl }) => {
       }
     };
     fetchApiKeys();
-  }, [apiUrl]);
+  }, [apiUrl, fetchWithAuth]);
 
   // Auto-scroll to bottom
   const scrollToBottom = () => {
@@ -152,21 +154,33 @@ const ChatPlayground = ({ models, apiUrl }) => {
         safeMaxTokens: safeMaxTokens
       });
 
-      const response = await fetch(apiEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          messages: messagesToSend,
-          stream: true,
-          temperature,
-          max_tokens: safeMaxTokens,
-          top_p: topP
-        }),
-        signal: abortControllerRef.current.signal
-      });
+      // Use fetchWithAuth if available (logged in), otherwise use API key
+      const requestBody = {
+        messages: messagesToSend,
+        stream: true,
+        temperature,
+        max_tokens: safeMaxTokens,
+        top_p: topP
+      };
+
+      const response = fetchWithAuth
+        ? await fetchWithAuth(apiEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody),
+            signal: abortControllerRef.current.signal
+          })
+        : await fetch(apiEndpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-API-Key': apiKey
+            },
+            body: JSON.stringify(requestBody),
+            signal: abortControllerRef.current.signal
+          });
 
       if (!response.ok) {
         throw new Error('Failed to get response');

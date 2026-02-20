@@ -1324,33 +1324,44 @@ async def smart_chat_completions(
             request_json["max_tokens"] = safe_max_tokens
 
     # Forward to model container with modified request
-    async with httpx.AsyncClient(timeout=300.0) as client:
-        # Check if streaming
-        is_streaming = request_json.get("stream", False)
+    # Check if streaming
+    is_streaming = request_json.get("stream", False)
 
-        if is_streaming:
-            # Handle streaming response
-            async def stream_generator():
-                async with client.stream(
-                    method="POST",
-                    url=f"http://MIND_MODEL_{model_abbr}:8000/v1/chat/completions",
-                    headers={"Content-Type": "application/json"},
-                    json=request_json
-                ) as response:
-                    async for chunk in response.aiter_bytes():
-                        yield chunk
+    if is_streaming:
+        # Handle streaming response
+        async def stream_generator():
+            try:
+                async with httpx.AsyncClient(timeout=300.0) as client:
+                    async with client.stream(
+                        method="POST",
+                        url=f"http://MIND_MODEL_{model_abbr}:8000/v1/chat/completions",
+                        headers={"Content-Type": "application/json"},
+                        json=request_json
+                    ) as response:
+                        if not response.is_success:
+                            logger.error(f"Streaming failed with status {response.status_code}")
+                            yield f"data: {{'error': 'Model returned status {response.status_code}'}}\n\n".encode()
+                            return
 
-            return StreamingResponse(
-                stream_generator(),
-                media_type="text/event-stream",
-                headers={
-                    "Cache-Control": "no-cache",
-                    "Connection": "keep-alive",
-                    "Access-Control-Allow-Origin": "*"
-                }
-            )
-        else:
-            # Handle regular response
+                        async for chunk in response.aiter_bytes():
+                            yield chunk
+
+            except Exception as e:
+                logger.error(f"Streaming error: {e}")
+                yield f"data: {{'error': 'Streaming failed: {str(e)}'}}\n\n".encode()
+
+        return StreamingResponse(
+            stream_generator(),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "Access-Control-Allow-Origin": "*"
+            }
+        )
+    else:
+        # Handle regular response
+        async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.post(
                 f"http://MIND_MODEL_{model_abbr}:8000/v1/chat/completions",
                 headers={"Content-Type": "application/json"},

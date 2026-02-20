@@ -29,6 +29,17 @@ MIND (Multi-model Intelligence Network Deployment) is an enterprise-grade orches
 | Context Management | ✅ Automatic | ❌ Manual | ❌ Manual | ❌ Manual |
 | API Authentication | ✅ JWT+API Keys | ❌ None | ❌ None | ⚠️ Basic |
 
+### Screenshots
+
+<p align="center">
+  <img src="images/dashboard.png" width="45%" />
+  <img src="images/model_library.png" width="45%" />
+</p>
+<p align="center">
+  <img src="images/playground.png" width="45%" />
+  <img src="images/api_key.png" width="45%" />
+</p>
+
 ## Architecture Overview
 
 ```

@@ -216,7 +216,7 @@ function AppContent() {
           {/* Chat Playground */}
           {activeView === 'chat' && (
             <div className="space-y-6">
-              <ChatPlayground models={models} apiUrl={API_URL} />
+              <ChatPlayground models={models} apiUrl={API_URL} fetchWithAuth={fetchWithAuth} />
             </div>
           )}
 
