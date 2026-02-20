@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Redis for state management
+  redis:
+    image: redis:alpine
+    container_name: MIND_REDIS_STORE
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis_data:/data
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    networks:
+      - llm-network
+    restart: unless-stopped
+
+  # Model Orchestrator - manages all model containers
+  orchestrator:
+    build:
+      context: ./orchestrator
+      dockerfile: Dockerfile
+    image: mind-orchestrator:latest
+    container_name: MIND_ORCHESTRATOR
+    ports:
+      - "127.0.0.1:8001:8001"
+    environment:
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - HF_TOKEN=${HF_TOKEN:-}
+      - AUTH_USERNAME=${AUTH_USERNAME:-admin}
+      - AUTH_PASSWORD_HASH=${AUTH_PASSWORD_HASH:-$$2b$$12$$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewY5CiIlW.JCNfIu}
+      - JWT_SECRET=${JWT_SECRET}
+      - SESSION_TIMEOUT=${SESSION_TIMEOUT:-24}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ~/.cache:/home/reach/.cache
+      - ./nginx/conf.d:/nginx-config
+    depends_on:
+      - redis
+    networks:
+      - llm-network
+    restart: unless-stopped
+
+  # Admin UI
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: mind-frontend:latest
+    container_name: MIND_ADMIN_UI
+    environment:
+      - VITE_API_URL=/orchestrator
+    networks:
+      - llm-network
+    restart: unless-stopped
+
+  # API Gateway
+  nginx:
+    image: nginx:alpine
+    container_name: MIND_API_GATEWAY
+    ports:
+      - "${NGINX_PORT:-9020}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - orchestrator
+      - frontend
+    networks:
+      - llm-network
+    restart: unless-stopped
+
+networks:
+  llm-network:
+    name: mind_llm-network
+    driver: bridge
+
+volumes:
+  redis_data:
