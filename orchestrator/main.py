@@ -7,7 +7,7 @@ import asyncio
 from typing import Optional, List, Dict, Any
 from datetime import timedelta
 
-from fastapi import FastAPI, HTTPException, Depends, Header, BackgroundTasks, Request
+from fastapi import FastAPI, HTTPException, Depends, Header, BackgroundTasks, Request, Response
 from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
@@ -356,8 +356,10 @@ async def proxy_chat_completion(
     Proxy chat completion requests to model containers.
     Handles smart context truncation and streaming.
     """
-    # Verify API key if provided
-    if x_api_key and not verify_api_key(r, x_api_key):
+    # Verify API key - required for all /api requests
+    if not x_api_key:
+        raise HTTPException(401, "API key required")
+    if not verify_api_key(r, x_api_key):
         raise HTTPException(401, "Invalid API key")
 
     # Check model exists and is running
@@ -408,6 +410,73 @@ async def proxy_chat_completion(
 
     except httpx.TimeoutException:
         raise HTTPException(504, "Model request timed out")
+    except Exception as e:
+        logger.error(f"Error proxying request to {model_abbr}: {e}")
+        raise HTTPException(500, f"Error processing request: {str(e)}")
+
+
+@app.api_route("/api/v1/{model_abbr}/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+async def proxy_model_api(
+    model_abbr: str,
+    path: str,
+    request: Request,
+    x_api_key: Optional[str] = Header(None)
+):
+    """
+    Generic proxy for all /api/v1/ model endpoints.
+    Requires API key authentication then forwards to model containers.
+    """
+    # Verify API key - required for all /api requests
+    if not x_api_key:
+        raise HTTPException(401, "API key required")
+    if not verify_api_key(r, x_api_key):
+        raise HTTPException(401, "Invalid API key")
+
+    # Check model exists and is running
+    model_state = get_model_state(r, model_abbr)
+    if not model_state:
+        raise HTTPException(404, f"Model {model_abbr} not found")
+    if model_state.get("status") != "running":
+        raise HTTPException(503, f"Model {model_abbr} is not running")
+
+    # Get container name
+    container_name = f"MIND_MODEL_{model_abbr}"
+    target_url = f"http://{container_name}:8000/v1/{path}"
+
+    # Forward the request
+    try:
+        import httpx
+        async with httpx.AsyncClient() as client:
+            # Build the request
+            headers = dict(request.headers)
+            # Remove hop-by-hop headers
+            headers.pop('host', None)
+            headers.pop('x-api-key', None)
+
+            # Get request body if present
+            body = None
+            if request.method in ["POST", "PUT"]:
+                body = await request.body()
+
+            # Forward the request
+            response = await client.request(
+                method=request.method,
+                url=target_url,
+                headers=headers,
+                content=body,
+                params=dict(request.query_params),
+                timeout=300.0
+            )
+
+            # Return the response
+            return Response(
+                content=response.content,
+                status_code=response.status_code,
+                headers=dict(response.headers)
+            )
+
+    except httpx.ConnectError:
+        raise HTTPException(503, f"Model container {model_abbr} is not responding")
     except Exception as e:
         logger.error(f"Error proxying request to {model_abbr}: {e}")
         raise HTTPException(500, f"Error processing request: {str(e)}")

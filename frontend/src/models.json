@@ -1,51 +1,51 @@
 {
   "predefined_models": [
     {
-      "name": "Qwen/Qwen2.5-1.5B-Instruct-AWQ",
-      "abbr": "qwen1.5b-awq",
+      "name": "Qwen/Qwen3-4B-AWQ",
+      "abbr": "qwen-3-4b-instruct-awq",
       "type": "llm",
-      "description": "Qwen 2.5 1.5B (4-bit AWQ) - Efficient",
+      "description": "Qwen 3 4B Instruct (4-bit AWQ) - 6.2GB",
       "quantization": "awq",
-      "max_model_len": 2048,
+      "max_model_len": 8192,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.25,
-        "max_num_seqs": 256
-      }
-    },
-    {
-      "name": "Qwen/Qwen2.5-7B-Instruct-AWQ",
-      "abbr": "qwen7b-awq",
-      "type": "llm",
-      "description": "Qwen 2.5 7B (4-bit AWQ) - Efficient",
-      "quantization": "awq",
-      "max_model_len": 2048,
-      "recommended_settings": {
-        "gpu_memory_utilization": 0.25,
-        "max_num_seqs": 256
+        "gpu_memory_utilization": 0.12,
+        "max_num_seqs": 5
       }
     },
     {
       "name": "TheBloke/Mistral-7B-Instruct-v0.2-AWQ",
       "abbr": "mistral7b-awq",
       "type": "llm",
-      "description": "Mistral 7B v0.2 (4-bit AWQ) - Fast inference",
+      "description": "Mistral 7B v0.2 (4-bit AWQ) - 9.7GB",
       "quantization": "awq",
-      "max_model_len": 2048,
+      "max_model_len": 8192,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.25,
-        "max_num_seqs": 256
+        "gpu_memory_utilization": 0.2,
+        "max_num_seqs": 5
       }
     },
     {
-      "name": "TheBloke/Llama-2-13B-chat-AWQ",
-      "abbr": "llama13b-awq",
+      "name": "casperhansen/llama-3-8b-instruct-awq",
+      "abbr": "llama-3-8b-instruct-awq",
       "type": "llm",
-      "description": "Llama 2 13B Chat (4-bit AWQ)",
+      "description": "Llama 3 8B Instruct (4-bit AWQ) - 9.7GB",
       "quantization": "awq",
-      "max_model_len": 2048,
+      "max_model_len": 8192,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.25,
-        "max_num_seqs": 256
+        "gpu_memory_utilization": 0.20,
+        "max_num_seqs": 5
+      }
+    },
+    {
+      "name": "gaunernst/gemma-3-4b-it-int4-awq",
+      "abbr": "gemma-3-4b-instruct-awq",
+      "type": "llm",
+      "description": "Gemma 3 4B Instruct (4-bit AWQ)",
+      "quantization": "awq",
+      "max_model_len": 8192,
+      "recommended_settings": {
+        "gpu_memory_utilization": 0.12,
+        "max_num_seqs": 5
       }
     },
     {
@@ -111,10 +111,22 @@
         {
           "name": "Balanced LLM + Embeddings",
           "models": [
-            {"abbr": "llama13b-awq", "vram_gb": 8},
-            {"abbr": "qwen7b", "vram_gb": 14},
-            {"abbr": "bge-large", "vram_gb": 2},
-            {"abbr": "bge-base", "vram_gb": 1}
+            {
+              "abbr": "llama13b-awq",
+              "vram_gb": 8
+            },
+            {
+              "abbr": "qwen7b",
+              "vram_gb": 14
+            },
+            {
+              "abbr": "bge-large",
+              "vram_gb": 2
+            },
+            {
+              "abbr": "bge-base",
+              "vram_gb": 1
+            }
           ],
           "total_vram_gb": 25,
           "remaining_gb": 23
@@ -122,9 +134,18 @@
         {
           "name": "Maximum LLMs",
           "models": [
-            {"abbr": "llama8b", "vram_gb": 16},
-            {"abbr": "mistral7b", "vram_gb": 14},
-            {"abbr": "qwen7b", "vram_gb": 14}
+            {
+              "abbr": "llama8b",
+              "vram_gb": 16
+            },
+            {
+              "abbr": "mistral7b",
+              "vram_gb": 14
+            },
+            {
+              "abbr": "qwen7b",
+              "vram_gb": 14
+            }
           ],
           "total_vram_gb": 44,
           "remaining_gb": 4
@@ -132,10 +153,22 @@
         {
           "name": "RAG Optimized",
           "models": [
-            {"abbr": "llama13b-awq", "vram_gb": 8},
-            {"abbr": "bge-large", "vram_gb": 2},
-            {"abbr": "reranker-m3", "vram_gb": 3},
-            {"abbr": "minilm", "vram_gb": 1}
+            {
+              "abbr": "llama13b-awq",
+              "vram_gb": 8
+            },
+            {
+              "abbr": "bge-large",
+              "vram_gb": 2
+            },
+            {
+              "abbr": "reranker-m3",
+              "vram_gb": 3
+            },
+            {
+              "abbr": "minilm",
+              "vram_gb": 1
+            }
           ],
           "total_vram_gb": 14,
           "remaining_gb": 34
