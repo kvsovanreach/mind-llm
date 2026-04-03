@@ -26,7 +26,7 @@ services:
     image: mind-orchestrator:latest
     container_name: MIND_ORCHESTRATOR
     ports:
-      - "127.0.0.1:8001:8001"
+      - "0.0.0.0:8001:8001"
     environment:
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}

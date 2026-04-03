@@ -248,9 +248,38 @@ async def get_model_logs(
 
 # ============= Status and Information Endpoints =============
 
-@app.get("/models")
-async def list_all_models(username: str = Depends(verify_token)):
-    """List all deployed models with their status"""
+@app.get("/api/v1/models")
+async def list_all_models_api(
+    x_api_key: Optional[str] = Header(None),
+    authorization: Optional[str] = Header(None)
+):
+    """List all deployed models with their status - API endpoint"""
+    # Check authentication - accept either API key or session token
+    authenticated = False
+
+    # First check API key if provided
+    if x_api_key:
+        if verify_api_key(r, x_api_key):
+            authenticated = True
+        else:
+            raise HTTPException(401, "Invalid API key")
+
+    # If no API key, check for session token
+    elif authorization:
+        try:
+            # Extract token from "Bearer <token>" format
+            if authorization.startswith("Bearer "):
+                token = authorization[7:]
+                username = verify_token(token)  # This will raise HTTPException if invalid
+                authenticated = True
+        except:
+            pass
+
+    # If neither authentication method worked, deny access
+    if not authenticated:
+        raise HTTPException(401, "Authentication required - provide API key or session token")
+
+    # Now list the models (same logic as before)
     models = []
     for model_data in list_models(r):
         # Check if model is in cache
@@ -273,6 +302,22 @@ async def list_all_models(username: str = Depends(verify_token)):
         ))
 
     return models
+
+
+@app.get("/orchestrator/models")
+async def list_all_models_orchestrator(
+    x_api_key: Optional[str] = Header(None),
+    authorization: Optional[str] = Header(None)
+):
+    """Backward compatibility endpoint - redirects to /api/v1/models"""
+    return await list_all_models_api(x_api_key=x_api_key, authorization=authorization)
+
+
+@app.get("/models")
+async def list_all_models_legacy(username: str = Depends(verify_token)):
+    """Legacy endpoint for dashboard - session auth only"""
+    # Call the new API endpoint with session token
+    return await list_all_models_api(authorization=f"Bearer {username}")
 
 
 @app.get("/cached-models")
@@ -350,17 +395,37 @@ async def delete_existing_api_key(
 async def proxy_chat_completion(
     model_abbr: str,
     request: Request,
-    x_api_key: Optional[str] = Header(None)
+    x_api_key: Optional[str] = Header(None),
+    authorization: Optional[str] = Header(None)
 ):
     """
     Proxy chat completion requests to model containers.
     Handles smart context truncation and streaming.
     """
-    # Verify API key - required for all /api requests
-    if not x_api_key:
-        raise HTTPException(401, "API key required")
-    if not verify_api_key(r, x_api_key):
-        raise HTTPException(401, "Invalid API key")
+    # Check authentication - accept either API key or session token
+    authenticated = False
+
+    # First check API key if provided
+    if x_api_key:
+        if verify_api_key(r, x_api_key):
+            authenticated = True
+        else:
+            raise HTTPException(401, "Invalid API key")
+
+    # If no API key, check for session token
+    elif authorization:
+        try:
+            # Extract token from "Bearer <token>" format
+            if authorization.startswith("Bearer "):
+                token = authorization[7:]
+                username = verify_token(token)  # This will raise HTTPException if invalid
+                authenticated = True
+        except:
+            pass
+
+    # If neither authentication method worked, deny access
+    if not authenticated:
+        raise HTTPException(401, "Authentication required - provide API key or session token")
 
     # Check model exists and is running
     model_state = get_model_state(r, model_abbr)
@@ -420,17 +485,37 @@ async def proxy_model_api(
     model_abbr: str,
     path: str,
     request: Request,
-    x_api_key: Optional[str] = Header(None)
+    x_api_key: Optional[str] = Header(None),
+    authorization: Optional[str] = Header(None)
 ):
     """
     Generic proxy for all /api/v1/ model endpoints.
-    Requires API key authentication then forwards to model containers.
+    Accepts either API key or session token authentication.
     """
-    # Verify API key - required for all /api requests
-    if not x_api_key:
-        raise HTTPException(401, "API key required")
-    if not verify_api_key(r, x_api_key):
-        raise HTTPException(401, "Invalid API key")
+    # Check authentication - accept either API key or session token
+    authenticated = False
+
+    # First check API key if provided
+    if x_api_key:
+        if verify_api_key(r, x_api_key):
+            authenticated = True
+        else:
+            raise HTTPException(401, "Invalid API key")
+
+    # If no API key, check for session token
+    elif authorization:
+        try:
+            # Extract token from "Bearer <token>" format
+            if authorization.startswith("Bearer "):
+                token = authorization[7:]
+                username = verify_token(token)  # This will raise HTTPException if invalid
+                authenticated = True
+        except:
+            pass
+
+    # If neither authentication method worked, deny access
+    if not authenticated:
+        raise HTTPException(401, "Authentication required - provide API key or session token")
 
     # Check model exists and is running
     model_state = get_model_state(r, model_abbr)

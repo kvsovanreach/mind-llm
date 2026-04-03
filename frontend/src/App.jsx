@@ -51,8 +51,8 @@ function AppContent() {
 
   const fetchModels = async () => {
     try {
-      // Use fetchWithAuth to properly handle authentication
-      const res = await fetchWithAuth(`${API_URL}/models`);
+      // Use the new /api/v1/models endpoint with proper authentication
+      const res = await fetchWithAuth('/api/v1/models');
       const data = await res.json();
 
       // Ensure data is an array

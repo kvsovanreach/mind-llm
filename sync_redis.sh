@@ -150,106 +150,19 @@ print('$MODEL_NAME|unknown')
 
     echo -e "${GREEN}✓ Redis synchronized with container state${NC}"
 
-    # Regenerate nginx routes for running models
+    # Note: Direct nginx routes are no longer needed since all API requests
+    # go through the orchestrator for authentication
     echo ""
-    echo "Regenerating nginx routes..."
+    echo "Note: Direct nginx routes disabled - all API requests require authentication"
 
-    # Trigger route regeneration through orchestrator API
-    if curl -s http://localhost:8001/health >/dev/null 2>&1; then
-        # Try to trigger update-nginx-routes endpoint if it exists
-        # For now, manually generate the routes
-        cat > "${NGINX_CONF_DIR}/model_routes.conf" << 'NGINX_EOF'
-
-# Auto-generated model routing configuration
-NGINX_EOF
-
-        for container in $RUNNING_MODELS; do
-            MODEL_ABBR=${container#MIND_MODEL_}
-
-            # Check if this is an embedding model
-            MODEL_TYPE=$(docker exec MIND_REDIS_STORE redis-cli HGET "model:$MODEL_ABBR" "type" 2>/dev/null)
-
-            cat >> "${NGINX_CONF_DIR}/model_routes.conf" << NGINX_EOF
-
-# Model: $MODEL_ABBR (OpenAI-compatible API)
-
-# Route chat/completions through orchestrator for smart context management
-location = /api/v1/$MODEL_ABBR/chat/completions {
-    proxy_pass http://orchestrator/api/v1/$MODEL_ABBR/chat/completions;
-    proxy_set_header Host \$host;
-    proxy_set_header X-Real-IP \$remote_addr;
-    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-
-    # CORS headers for browser access
-    add_header 'Access-Control-Allow-Origin' '*' always;
-    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-    add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, X-API-Key' always;
-
-    # Handle preflight requests
-    if (\$request_method = 'OPTIONS') {
-        add_header 'Access-Control-Allow-Origin' '*';
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-        add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, X-API-Key';
-        add_header 'Access-Control-Max-Age' 1728000;
-        add_header 'Content-Type' 'text/plain; charset=utf-8';
-        add_header 'Content-Length' 0;
-        return 204;
-    }
-
-    # SSE support for streaming
-    proxy_set_header Connection '';
-    proxy_http_version 1.1;
-    chunked_transfer_encoding off;
-    proxy_buffering off;
-    proxy_cache off;
-    proxy_read_timeout 300s;
-    proxy_send_timeout 300s;
-}
-
-# Route all other endpoints directly to model
-location /api/v1/$MODEL_ABBR/ {
-    proxy_pass http://$container:8000/v1/;
-    proxy_set_header Host \$host;
-    proxy_set_header X-Real-IP \$remote_addr;
-    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-
-    # CORS headers for browser access
-    add_header 'Access-Control-Allow-Origin' '*' always;
-    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-    add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, X-API-Key' always;
-
-    # Handle preflight requests
-    if (\$request_method = 'OPTIONS') {
-        add_header 'Access-Control-Allow-Origin' '*';
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
-        add_header 'Access-Control-Allow-Headers' 'Authorization, Content-Type, X-API-Key';
-        add_header 'Access-Control-Max-Age' 1728000;
-        add_header 'Content-Type' 'text/plain; charset=utf-8';
-        add_header 'Content-Length' 0;
-        return 204;
-    }
-
-    # SSE support for streaming
-    proxy_set_header Connection '';
-    proxy_http_version 1.1;
-    chunked_transfer_encoding off;
-    proxy_buffering off;
-    proxy_cache off;
-    proxy_read_timeout 300s;
-    proxy_send_timeout 300s;
-}
-NGINX_EOF
-        done
-
-        # Reload nginx if routes were generated
-        if [ -n "$RUNNING_MODELS" ]; then
-            docker exec MIND_API_GATEWAY nginx -s reload 2>/dev/null && \
-                echo -e "${GREEN}✓ Nginx routes regenerated${NC}" || \
-                echo -e "${YELLOW}⚠ Could not reload nginx${NC}"
-        fi
-    else
-        echo -e "${YELLOW}⚠ Orchestrator not available, skipping route generation${NC}"
+    # Clean up old model_routes.conf if it exists
+    if [ -f "${NGINX_CONF_DIR}/model_routes.conf" ]; then
+        echo "Removing old model_routes.conf (no longer needed)"
+        rm -f "${NGINX_CONF_DIR}/model_routes.conf" 2>/dev/null || true
     fi
+
+    # The old nginx route generation code is disabled since all API requests
+    # now go through the orchestrator for authentication
 fi
 
 # Verify sync by showing Redis state

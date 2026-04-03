@@ -1,5 +1,17 @@
 {
   "predefined_models": [
+        {
+      "name": "LGAI-EXAONE/EXAONE-3.5-7.8B-Instruct-AWQ",
+      "abbr": "exaone-357-8b-instruct-awq",
+      "type": "llm",
+      "description": "EXAONE-3.5-7.8B-Instruct-AWQ",
+      "quantization": "awq",
+      "max_model_len": 8192,
+      "recommended_settings": {
+        "gpu_memory_utilization": 0.25,
+        "max_num_seqs": 5
+      }
+    },
     {
       "name": "Qwen/Qwen3-4B-AWQ",
       "abbr": "qwen-3-4b-instruct-awq",
@@ -37,14 +49,13 @@
       }
     },
     {
-      "name": "gaunernst/gemma-3-4b-it-int4-awq",
-      "abbr": "gemma-3-4b-instruct-awq",
+      "name": "google/gemma-3-4b-it",
+      "abbr": "gemma-3-4b-instruct",
       "type": "llm",
-      "description": "Gemma 3 4B Instruct (4-bit AWQ)",
-      "quantization": "awq",
+      "description": "Gemma 3 4B Instruct",
       "max_model_len": 8192,
       "recommended_settings": {
-        "gpu_memory_utilization": 0.12,
+        "gpu_memory_utilization": 0.25,
         "max_num_seqs": 5
       }
     },
@@ -101,6 +112,17 @@
       "recommended_settings": {
         "gpu_memory_utilization": 0.05,
         "max_num_seqs": 1024
+      }
+    },
+    {
+      "name": "jhgan/ko-sroberta-multitask",
+      "abbr": "sroberta-multitask",
+      "type": "embedding",
+      "description": "Korean sentence-transformers model",
+      "max_model_len": 128,
+      "recommended_settings": {
+        "gpu_memory_utilization": 0.05,
+        "max_num_seqs": 50
       }
     }
   ],
